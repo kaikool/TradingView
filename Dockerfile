@@ -1,45 +1,37 @@
-# Use Python 3.11 slim image
+# Dockerfile
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DISPLAY=:99
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    unzip \
-    curl \
-    xvfb \
-    python3-tk \
-    tk-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Cài chromium + chromedriver + fonts
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium chromium-driver \
+    fonts-liberation fonts-noto-color-emoji fonts-dejavu-core \
+    tzdata \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+# (Tùy chọn) timezone Asia/Bangkok
+RUN ln -fs /usr/share/zoneinfo/Asia/Bangkok /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
-COPY requirements_deploy.txt requirements.txt
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY app.py .
-COPY index.html .
+COPY . ./
 
-# Create directory for screenshots (if needed)
-RUN mkdir -p /app/screenshots
+# Cloud Run sẽ đặt biến PORT, mặc định 8080
+ENV PORT=8080 \
+    PYTHONPATH=/app \
+    # chỉ để chắc chắn chromium path trong 1 số môi trường
+    CHROME_BIN=/usr/bin/chromium \
+    CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-# Expose port
-EXPOSE 8000
+# Healthcheck (optional)
+# HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
-# Start Xvfb and the application
-CMD pkill -f Xvfb || true && Xvfb :99 -screen 0 1920x1080x24 & python app.py
+EXPOSE 8080
+CMD ["uvicorn", "app:app", "--host=0.0.0.0", "--port=8080"]

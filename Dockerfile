@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     xvfb \
+    python3-tk \
+    tk-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome
@@ -40,4 +42,4 @@ RUN mkdir -p /app/screenshots
 EXPOSE 8000
 
 # Start Xvfb and the application
-CMD Xvfb :99 -screen 0 1920x1080x24 & python app.py
+CMD pkill -f Xvfb || true && Xvfb :99 -screen 0 1920x1080x24 & python app.py

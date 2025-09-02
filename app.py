@@ -16,7 +16,7 @@ from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from tkinter import Tk
+# from tkinter import Tk  # Not needed in Docker headless environment
 from urllib3 import encode_multipart_formdata
 
 
@@ -36,6 +36,7 @@ URLS = {
 
 
 # ================== FastAPI ==================
+# Create app and mount static files
 app = FastAPI(
     title="TradingView Chart Capture API",
     version="2.0.0",
@@ -331,11 +332,21 @@ def capture_chart_screenshot_url(driver, chart: str, ticker: str = "NONE", timef
         ActionChains(driver).key_down(Keys.ALT).send_keys('s').key_up(Keys.ALT).perform()
         time.sleep(3)
 
-        root = Tk(); root.withdraw()
+        # In Docker environment, clipboard is not available
+        # Use headless screenshot fallback instead
+        print('Visible mode: trying to get URL from clipboard...')
         try:
-            url = root.clipboard_get()
-        finally:
-            root.destroy()
+            # Fallback to screenshot since clipboard unavailable in Docker
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"chart_{chart}_{timestamp}.png"
+            os.makedirs("screenshots", exist_ok=True)
+            filepath = os.path.join("screenshots", filename)
+            driver.save_screenshot(filepath)
+            url = f"http://localhost:8000/screenshots/{filename}"
+            print(f'Fallback screenshot saved: {url}')
+        except Exception as e:
+            print(f"Screenshot fallback failed: {e}")
+            url = "https://www.tradingview.com/x/capture_failed/"
 
         return url
 
@@ -684,12 +695,13 @@ def capture(req: CaptureRequest):
 # ================== Bootstrap ==================
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.getenv("PORT", 8000))  # Render sets PORT environment variable
     print("Starting TradingView Capture API Server...")
     print("Environment variables:")
     print(f"- TRADINGVIEW_USERNAME: {'SET' if os.getenv('TRADINGVIEW_USERNAME') else 'NOT SET (using hardcode)'}")
     print(f"- TRADINGVIEW_PASSWORD: {'SET' if os.getenv('TRADINGVIEW_PASSWORD') else 'NOT SET (using hardcode)'}")
     print(f"- TRADINGVIEW_SESSIONID: {'SET' if os.getenv('TRADINGVIEW_SESSIONID') else 'NOT SET (using hardcode)'}")
-    print("\nServer will be available at: http://0.0.0.0:8000")
-    print("API documentation at: http://0.0.0.0:8000/docs")
+    print(f"\nServer will be available at: http://0.0.0.0:{port}")
+    print(f"API documentation at: http://0.0.0.0:{port}/docs")
     
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)

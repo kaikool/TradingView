@@ -1,53 +1,12 @@
-# Git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.env
 .git
 .gitignore
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-.venv/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Screenshots (if any)
-screenshots/
-*.png
-*.jpg
-*.jpeg
-
-# Selenium
-.wdm/
-chromedriver*
-
-# Documentation
+Dockerfile*
 README.md
-*.md
-
-# Replit specific
-.replit
-replit.nix
-.pythonlibs/
-
-# Environment
-.env
-.env.local
+tests/
+.cache/

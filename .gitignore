@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.pythonlibs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Screenshots
+screenshots/
+*.png
+*.jpg
+*.jpeg
+
+# Selenium WebDriver
+.wdm/
+chromedriver*
+
+# Environment variables
+.env
+.env.local
+
+# Replit specific files
+.replit
+replit.nix
+.upm/
+pyvenv.cfg
+
+# Temporary files
+temp/
+tmp/
